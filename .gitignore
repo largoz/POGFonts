@@ -1,0 +1,7 @@
+bin/
+obj/
+*.user
+.vs/
+
+# Thunderstore packaging output (tools/ThunderStoreCLI.py folder mode)
+build/

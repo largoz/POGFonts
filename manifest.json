@@ -1,0 +1,9 @@
+{
+  "name": "POG_Fonts",
+  "version_number": "1.0.0",
+  "website_url": "https://github.com/largoz/POGFonts",
+  "description": "Cyrillic letters for the main menu font, drawn to match the original. Ukrainian and Russian menus keep the game's look instead of switching to a plain font.",
+  "dependencies": [
+    "LavaGang-MelonLoader-0.7.2"
+  ]
+}
