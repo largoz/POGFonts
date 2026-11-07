@@ -45,6 +45,11 @@
       <HintPath>$(GameDir)\MelonLoader\Il2CppAssemblies\UnityEngine.UI.dll</HintPath>
       <Private>false</Private>
     </Reference>
+    <!-- Optional at runtime: only ConfigPage touches it, behind a NoInlining call. -->
+    <Reference Include="POGConfig">
+      <HintPath>$(GameDir)\Mods\POGConfig.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
     <Reference Include="Unity.TextMeshPro">
       <HintPath>$(GameDir)\MelonLoader\Il2CppAssemblies\Unity.TextMeshPro.dll</HintPath>
       <Private>false</Private>

@@ -50,7 +50,7 @@ The same approach works for any script whose letters can be built from Latin sha
 2. Add your letters, either with your own script modelled on `build_font.py` or in a font editor such as FontForge.
 3. Rename the font. Passero One's license reserves the name "Passero", so a modified version must not use it. Keep the copyright and the license.
 
-For now the mod loads only its own font. Loading other font files from a folder is planned. Until then, replace `GoblinMenu-Regular.ttf` and rebuild the mod, or open an issue and we'll sort it out together.
+4. Put the file into `UserData/POGFonts/<game font name>/` and restart the game. It shows up in the POG Fonts settings next to Vanilla. No rebuild of the mod is needed. If you make a better Goblin Menu, a pull request here is welcome.
 
 ## License
 

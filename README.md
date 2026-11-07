@@ -18,11 +18,32 @@ Some letters came out better than others. If you know how to make any of them be
 - Text the game draws in Passero One, which is the main menu.
 - Text that uses the game's other fonts is not changed.
 
+## Choosing a font
+
+Goblin Menu is on by default. To switch back to the game's own look, or to a font of your own:
+
+- **With [POG Config](https://thunderstore.io/c/pit-of-goblin/p/Largo/POG_Config/):** open MODS, then POG Fonts, and pick **Vanilla**, **Goblin Menu (Cyrillic)** or one of your fonts for the menu font. The change shows at once.
+- **Without it:** in `UserData/MelonPreferences.cfg`, under `[POG_Fonts]`, set `PasseroOne_Regular_SDF` to `"Vanilla"`, `"Goblin Menu (Cyrillic)"` or the name of your font file without its extension.
+
+Vanilla means exactly what the game shows without this mod.
+
+## Your own fonts
+
+You can add letters to any of the game's fonts without writing code:
+
+1. Make a folder in `UserData/POGFonts/` named after the game font, for example `UserData/POGFonts/PasseroOne-Regular SDF/`.
+2. Put a `.ttf` or `.otf` file into it.
+3. Restart the game. Your font appears in the list under its file name.
+
+Your font only supplies the letters the game font doesn't have, so its Latin letters, if it has any, are not used where the game already has them. If the mod has no font of its own for that game font, yours is used by default.
+
+Game font names, as the mod lists them in the MelonLoader log on startup: `PasseroOne-Regular SDF` (main menu), `RulerGold SDF`, `Roboto-Medium SDF`, `LiberationSans SDF`, `NotoSansJP-SemiBold SDF`, `NotoSansSC-SemiBold SDF`, `NotoSansTC-SemiBold SDF`, `ZCOOLKuaiLe-Regular SDF`.
+
 ## How it works
 
-Nothing in the game files is changed. When the menu font loads, the mod builds a font from the file it carries inside and adds it to the front of the menu font's fallback list. TextMeshPro only looks there for letters the menu font doesn't have. Latin text looks exactly as before, and other languages are not affected.
+Nothing in the game files is changed. When a game font loads, the mod builds the chosen font from its file and puts it at the front of that game font's fallback list. TextMeshPro only looks there for letters the game font doesn't have. Latin text looks exactly as before, and other languages are not affected.
 
-On its first run the mod writes the font and its license to `UserData/POGFonts/`, because TextMeshPro reads letters from the file as it needs them.
+On its first run the mod writes Goblin Menu and its license to `UserData/POGFonts/`, because TextMeshPro reads letters from the file as they are needed.
 
 To remove the mod, delete `POGFonts.dll`.
 
@@ -31,12 +52,7 @@ To remove the mod, delete `POGFonts.dll`.
 - With a mod manager: just install it.
 - By hand: put `POGFonts.dll` into the game's `Mods` folder. You need MelonLoader 0.7.2 or newer.
 
-It works on its own and does not need POG Config.
-
-## Plans
-
-- Font packs: put your own font into a folder to add letters for any language, no code needed.
-- Turning font packs on and off from the POG Config panel.
+It works on its own. POG Config is optional and only adds the settings page.
 
 ## License
 
@@ -49,6 +65,8 @@ The font is under the SIL Open Font License 1.1 ([font/OFL.txt](https://github.c
 Головне меню гри намальоване шрифтом Passero One, у якому немає жодної кириличної літери. Тому українською кнопки меню малюються звичайним шрифтом без засічок. Цей мод додає кирилицю, намальовану під оригінал.
 
 Я не шрифтовий дизайнер. Кожну літеру я намагався зібрати з частин самого шрифту: літери, однакові з латиницею, взяті як є, частина віддзеркалена, решта складена зі шматків інших гліфів і згладжена. Деякі вийшли краще, деякі гірше. Якщо знаєте, як зробити краще, або хочете зробити так само для іншої мови, пишіть на [GitHub](https://github.com/largoz/POGFonts). Там є й скрипти, якими зібрано шрифт.
+
+Шрифт можна перемкнути в POG Config (MODS → POG Fonts): **Vanilla** дає вигляд гри без мода, **Goblin Menu (Cyrillic)** — наш шрифт, а також є ваші власні шрифти. Свій шрифт можна додати без коду. Створіть теку з назвою шрифту гри, наприклад `UserData/POGFonts/PasseroOne-Regular SDF/`, покладіть туди `.ttf` чи `.otf` і перезапустіть гру.
 
 Мод нічого не змінює у файлах гри й не чіпає латиницю. Щоб прибрати його, видаліть `POGFonts.dll`.
 
