@@ -1,6 +1,7 @@
 """Render the mod icon (256x256): three rows of letters in the font, the middle one highlighted.
 
-usage: icon.py <font.ttf> <out.png> [--style menu|primer] [--rows ROW1 ROW2 ROW3]
+usage: icon.py <font.ttf> <out.png> [--style primer|menu] [--rows ROW1 ROW2 ROW3]
+The shipped icon.png is the default: primer, rows АБВ КЛП ЇЙИ.
 
 menu    the game's main menu: a dark cave lit by a teal lantern, the middle row on a gold
         brush stroke like the selected menu button
@@ -12,8 +13,8 @@ import sys
 from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageFont
 
 font_path, out = sys.argv[1], sys.argv[2]
-style = sys.argv[sys.argv.index("--style") + 1] if "--style" in sys.argv else "menu"
-rows = sys.argv[sys.argv.index("--rows") + 1:][:3] if "--rows" in sys.argv else ["АБВ", "ЬЪЫ", "ЇЙИ"]
+style = sys.argv[sys.argv.index("--style") + 1] if "--style" in sys.argv else "primer"
+rows = sys.argv[sys.argv.index("--rows") + 1:][:3] if "--rows" in sys.argv else ["АБВ", "КЛП", "ЇЙИ"]
 
 S = 1024            # drawn large, downsampled at the end for clean edges
 ROW_H = S / 3
