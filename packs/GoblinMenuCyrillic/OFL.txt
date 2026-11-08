@@ -1,4 +1,4 @@
-Goblin Menu (font/GoblinMenu-Regular.ttf)
+Goblin Menu (GoblinMenu-Regular.ttf)
 
 Copyright (c) 2011, Sorkin Type Co (www.sorkintype.com), with Reserved Font Name "Passero".
 Cyrillic additions Copyright (c) 2026, Largo.

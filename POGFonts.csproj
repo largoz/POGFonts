@@ -10,11 +10,6 @@
     <GameDir Condition="'$(GameDir)' == ''">$(MSBuildThisFileDirectory)..\..</GameDir>
   </PropertyGroup>
 
-  <ItemGroup>
-    <!-- The font travels inside the DLL, so the package is a single file. -->
-    <EmbeddedResource Include="font\GoblinMenu-Regular.ttf" LogicalName="POGFonts.GoblinMenu-Regular.ttf" />
-    <EmbeddedResource Include="font\OFL.txt" LogicalName="POGFonts.OFL.txt" />
-  </ItemGroup>
 
   <ItemGroup>
     <Reference Include="MelonLoader">

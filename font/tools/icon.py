@@ -1,7 +1,8 @@
 """Render the mod icon (256x256): three rows of letters in the font, the middle one highlighted.
 
-usage: icon.py <font.ttf> <out.png> [--style primer|menu] [--rows ROW1 ROW2 ROW3]
-The shipped icon.png is the default: primer, rows АБВ КЛП ЇЙИ.
+usage: icon.py <font.ttf> <out.png> [--style primer|menu] [--rows ROW1 ROW2 ROW3] [--row-fonts F1 F2 F3]
+The Goblin Menu Cyrillic icon is the default: primer, rows АБВ КЛП ЇЙИ.
+POG Fonts' icon: --rows Aa Aa Aa --row-fonts DejaVuSans-Bold.ttf <GoblinMenu> DejaVuSerif.ttf
 
 menu    the game's main menu: a dark cave lit by a teal lantern, the middle row on a gold
         brush stroke like the selected menu button
@@ -15,6 +16,7 @@ from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageFont
 font_path, out = sys.argv[1], sys.argv[2]
 style = sys.argv[sys.argv.index("--style") + 1] if "--style" in sys.argv else "primer"
 rows = sys.argv[sys.argv.index("--rows") + 1:][:3] if "--rows" in sys.argv else ["АБВ", "КЛП", "ЇЙИ"]
+row_fonts = sys.argv[sys.argv.index("--row-fonts") + 1:][:3] if "--row-fonts" in sys.argv else [font_path] * 3
 
 S = 1024            # drawn large, downsampled at the end for clean edges
 ROW_H = S / 3
@@ -70,11 +72,13 @@ def ragged_band(y0, y1, x0, x1, jitter, tilt=0.0):
 
 def letters(img, font, colors, shadow=None):
     d = ImageDraw.Draw(img)
+    fonts = [ImageFont.truetype(p, SIZE) for p in row_fonts]
     # One grid for every row, from the cap height of a plain letter, so accents (Ї Й) rise
     # above it as in text instead of pushing their row down.
-    _, cap_top, _, cap_bottom = d.textbbox((0, 0), "Н", font=font)
+    _, cap_top, _, cap_bottom = d.textbbox((0, 0), "H", font=font)
     cap_h = cap_bottom - cap_top
     for i, text in enumerate(rows):
+        font = fonts[i]
         l, _, r, _ = d.textbbox((0, 0), text, font=font)
         x = (S - (r - l)) / 2 - l
         y = ROW_H * i + (ROW_H - cap_h) / 2 - cap_top + (22 if i == 2 else 0)
@@ -117,7 +121,7 @@ elif style == "primer":
     img = vignette(img, 0.35)
     img = grain(img, 0.3)
     d = ImageDraw.Draw(img)
-    _, cap_top, _, cap_bottom = d.textbbox((0, 0), "Н", font=font)
+    _, cap_top, _, cap_bottom = d.textbbox((0, 0), "H", font=font)
     cap_h = cap_bottom - cap_top
     for i in range(3):  # copybook guide lines: baseline and cap line of each row
         base = ROW_H * i + (ROW_H + cap_h) / 2 + (22 if i == 2 else 0)

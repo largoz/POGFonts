@@ -8,7 +8,6 @@ namespace POGMods.Fonts
     {
         public string Name;      // shown in the settings, and what the setting stores
         public string FontFile;  // absolute path of the TTF/OTF
-        public bool BuiltIn;
         public string Sample;    // letters whose source is logged after wiring; null to skip the check
 
         public TMP_FontAsset Asset; // created the first time this choice is used

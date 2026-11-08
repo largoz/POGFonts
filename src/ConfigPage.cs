@@ -30,8 +30,8 @@ namespace POGMods.Fonts
                     options));
             }
             POGConfig.Register("POG Fonts", entries, new ModInfo(FontsMod.VERSION,
-                "Fonts that add missing letters to the game's fonts. Your own fonts go into " +
-                "UserData/POGFonts/<game font name>/ (restart the game after adding one).", "largo"));
+                "Font manager: for each game font, pick Vanilla or one of the installed font mods. " +
+                "A font file put into UserData/POGFonts/<game font name>/ shows up here after a restart.", "largo"));
         }
     }
 }
