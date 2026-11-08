@@ -1,6 +1,6 @@
 # POG Fonts
 
-Cyrillic letters for the Pit of Goblin main menu font.
+Cyrillic letters (Ukrainian and Russian) for the Pit of Goblin main menu font.
 
 The main menu is drawn in Passero One, a font with no Cyrillic letters at all. So when you switch the game to Ukrainian or Russian, every menu button falls back to a plain sans-serif and the menu loses its look. This mod adds the missing letters, drawn to match the original, so that «ПОЧАТИ» and «НАЛАШТУВАННЯ» look as if the font had always had them.
 
@@ -57,18 +57,6 @@ It works on its own. POG Config is optional and only adds the settings page.
 ## License
 
 The font is under the SIL Open Font License 1.1 ([font/OFL.txt](https://github.com/largoz/POGFonts/blob/main/font/OFL.txt)). It is based on Passero One by Viktoriya Grabowska (Sorkin Type Co.). "Passero" is a Reserved Font Name under that license, so the modified font is called Goblin Menu.
-
----
-
-## Українською
-
-Головне меню гри намальоване шрифтом Passero One, у якому немає жодної кириличної літери. Тому українською кнопки меню малюються звичайним шрифтом без засічок. Цей мод додає кирилицю, намальовану під оригінал.
-
-Я не шрифтовий дизайнер. Кожну літеру я намагався зібрати з частин самого шрифту: літери, однакові з латиницею, взяті як є, частина віддзеркалена, решта складена зі шматків інших гліфів і згладжена. Деякі вийшли краще, деякі гірше. Якщо знаєте, як зробити краще, або хочете зробити так само для іншої мови, пишіть на [GitHub](https://github.com/largoz/POGFonts). Там є й скрипти, якими зібрано шрифт.
-
-Шрифт можна перемкнути в POG Config (MODS → POG Fonts): **Vanilla** дає вигляд гри без мода, **Goblin Menu (Cyrillic)** — наш шрифт, а також є ваші власні шрифти. Свій шрифт можна додати без коду. Створіть теку з назвою шрифту гри, наприклад `UserData/POGFonts/PasseroOne-Regular SDF/`, покладіть туди `.ttf` чи `.otf` і перезапустіть гру.
-
-Мод нічого не змінює у файлах гри й не чіпає латиницю. Щоб прибрати його, видаліть `POGFonts.dll`.
 
 ---
 
