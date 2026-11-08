@@ -2,7 +2,7 @@
 
 Cyrillic letters for the Pit of Goblin main menu font.
 
-The main menu is drawn in Passero One, a font with no Cyrillic letters at all. So when you switch the game to Ukrainian or Russian, every menu button falls back to a plain sans-serif and the menu loses its look. This mod adds the missing letters, drawn to match the original, so that «ПОЧАТИ» and «НАЛАШТУВАННЯ» sit next to «MODS» as if they had always been there.
+The main menu is drawn in Passero One, a font with no Cyrillic letters at all. So when you switch the game to Ukrainian or Russian, every menu button falls back to a plain sans-serif and the menu loses its look. This mod adds the missing letters, drawn to match the original, so that «ПОЧАТИ» and «НАЛАШТУВАННЯ» look as if the font had always had them.
 
 ![The main menu in Ukrainian with this mod](https://raw.githubusercontent.com/largoz/POGFonts/main/docs/menu-uk.png)
 
