@@ -1,11 +1,11 @@
 # Goblin Menu: how the font is made
 
-Goblin Menu is Passero One (the game's main menu font) with 74 Cyrillic letters added. The finished font ships as the font mod in `../packs/GoblinMenuCyrillic/`. Everything here is so that anyone can rebuild it, improve a letter, or make the same kind of font for another language.
+Goblin Menu is Passero One (the game's main menu font) with 74 Cyrillic letters added. The finished font ships as the font mod in `../packs/GoblinMenuCyrillic/` (files in its `Mods/Largo-Goblin_Menu_Cyrillic/`). Everything here is so that anyone can rebuild it, improve a letter, or make the same kind of font for another language.
 
 | File | What it is |
 |---|---|
-| `../packs/GoblinMenuCyrillic/GoblinMenu-Regular.ttf` | The finished font, as the font mod ships it. |
-| `../packs/GoblinMenuCyrillic/OFL.txt` | Its license (SIL Open Font License 1.1). |
+| `../packs/GoblinMenuCyrillic/Mods/Largo-Goblin_Menu_Cyrillic/GoblinMenu-Regular.ttf` | The finished font, as the font mod ships it. |
+| `../packs/GoblinMenuCyrillic/Mods/Largo-Goblin_Menu_Cyrillic/OFL.txt` | Its license (SIL Open Font License 1.1). |
 | `source/PasseroOne-Regular.ttf` | The original font, taken from the game (`sharedassets0.assets`, Font object `PasseroOne-Regular`). sha256 `0b259fd9c6da1e4cab5717edb23e5ab63d69e694a718caa225c99e29902cdb86`. |
 | `tools/` | The build script and helpers to preview and inspect letters. |
 
@@ -14,7 +14,7 @@ Goblin Menu is Passero One (the game's main menu font) with 74 Cyrillic letters 
 You need Python 3 with `fonttools`, `skia-pathops` and `Pillow`, plus `UnityPy` for the extraction tools.
 
 ```sh
-python tools/build_font.py source/PasseroOne-Regular.ttf ../packs/GoblinMenuCyrillic/GoblinMenu-Regular.ttf --smooth 30
+python tools/build_font.py source/PasseroOne-Regular.ttf ../packs/GoblinMenuCyrillic/Mods/Largo-Goblin_Menu_Cyrillic/GoblinMenu-Regular.ttf --smooth 30
 ```
 
 The result matches the shipped font glyph for glyph. The font mod reads the file from there; no rebuild of POG Fonts is involved.
@@ -51,8 +51,8 @@ The same approach works for any script whose letters can be built from Latin sha
 3. Rename the font. Passero One's license reserves the name "Passero", so a modified version must not use it. Keep the copyright and the license.
 
 4. Try it: put the file into `UserData/POGFonts/<game font name>/` and restart the game. It shows up in the POG Fonts settings next to Vanilla.
-5. Publish it as a font mod: copy `../packs/GoblinMenuCyrillic/`, swap in your font, and edit `pogfont.json` and `manifest.json` (see "Making a font mod" in the main README). If you make a better Goblin Menu, a pull request here is welcome.
+5. Publish it as a font mod: copy `../packs/GoblinMenuCyrillic/`, rename its `Mods/` subfolder to `<Author>-<Name>`, swap in your font, and edit `pogfont.json` and `manifest.json` (see "Making a font mod" in the main README). If you make a better Goblin Menu, a pull request here is welcome.
 
 ## License
 
-SIL Open Font License 1.1, see `../packs/GoblinMenuCyrillic/OFL.txt`. Original: Passero One, Copyright (c) 2011 Sorkin Type Co, designed by Viktoriya Grabowska, Reserved Font Name "Passero". The Cyrillic additions are under the same license.
+SIL Open Font License 1.1, see `../packs/GoblinMenuCyrillic/Mods/Largo-Goblin_Menu_Cyrillic/OFL.txt`. Original: Passero One, Copyright (c) 2011 Sorkin Type Co, designed by Viktoriya Grabowska, Reserved Font Name "Passero". The Cyrillic additions are under the same license.

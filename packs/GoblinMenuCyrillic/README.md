@@ -22,8 +22,8 @@ Some letters came out better than others. If you know how to make any of them be
 
 Needs [POG Fonts](https://thunderstore.io/c/pit-of-goblin/p/Largo/POG_Fonts/), the font manager; a mod manager installs it for you. Once installed, this font is used right away. To go back to the game's own look, pick **Vanilla** for the menu font in POG Config (MODS, then POG Fonts).
 
-By hand: put this whole folder, with `pogfont.json` in it, anywhere inside the game's `Mods` folder.
+By hand: unpack the zip into the game folder (or your mod manager profile), so that `Mods/Largo-Goblin_Menu_Cyrillic/` with `pogfont.json` in it ends up inside `Mods`.
 
 ## License
 
-SIL Open Font License 1.1 ([OFL.txt](https://github.com/largoz/POGFonts/blob/main/packs/GoblinMenuCyrillic/OFL.txt)). Based on Passero One by Viktoriya Grabowska (Sorkin Type Co.). "Passero" is a Reserved Font Name under that license, so the modified font is called Goblin Menu.
+SIL Open Font License 1.1 ([OFL.txt](https://github.com/largoz/POGFonts/blob/main/packs/GoblinMenuCyrillic/Mods/Largo-Goblin_Menu_Cyrillic/OFL.txt)). Based on Passero One by Viktoriya Grabowska (Sorkin Type Co.). "Passero" is a Reserved Font Name under that license, so the modified font is called Goblin Menu.

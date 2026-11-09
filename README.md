@@ -20,13 +20,16 @@ Vanilla means exactly what the game shows without any font mod.
 A font mod is a Thunderstore package with no code. Copy [packs/GoblinMenuCyrillic](https://github.com/largoz/POGFonts/tree/main/packs/GoblinMenuCyrillic) as a template:
 
 ```
-manifest.json      the usual package manifest, with "Largo-POG_Fonts-1.1.0" in "dependencies"
-icon.png           256x256
+manifest.json                         the usual package manifest, with "Largo-POG_Fonts-1.1.0" in "dependencies"
+icon.png                              256x256
 README.md
-pogfont.json       what the font is and which game font it adds letters to
-MyFont.ttf         the font (.ttf or .otf)
-OFL.txt            the font's license, if it has one
+CHANGELOG.md
+Mods/<Author>-<Name>/pogfont.json     what the font is and which game font it adds letters to
+Mods/<Author>-<Name>/MyFont.ttf       the font (.ttf or .otf)
+Mods/<Author>-<Name>/OFL.txt          the font's license, if it has one
 ```
+
+Keep the font files in that `Mods/<Author>-<Name>/` folder. Gale unpacks files outside `Mods/` loose into the profile's `Mods/`, where every font mod's `pogfont.json` would land on the same path; r2modman puts the whole package into its own folder. With the files in a folder of their own, both managers keep each font mod apart, and POG Fonts finds them anywhere under `Mods/`. `python build_pack.py <folder>` from the repository zips a pack and refuses the wrong layout.
 
 `pogfont.json`:
 
@@ -41,7 +44,7 @@ OFL.txt            the font's license, if it has one
 ```
 
 - `name` is what players see in the list.
-- `font` is the file, next to `pogfont.json`.
+- `font` is the file, in the same folder as `pogfont.json`.
 - `target` is the game font to add letters to. POG Fonts lists every game font's name in the MelonLoader log at startup: `PasseroOne-Regular SDF` is the main menu; the others are `RulerGold SDF`, `Roboto-Medium SDF`, `LiberationSans SDF`, `NotoSansJP-SemiBold SDF`, `NotoSansSC-SemiBold SDF`, `NotoSansTC-SemiBold SDF` and `ZCOOLKuaiLe-Regular SDF`.
 - `sample` is optional: a few of your letters. After loading, the log says whether each one is now drawn from your font, which makes problems easy to spot.
 
@@ -66,10 +69,10 @@ POG Config is optional and only adds the settings page.
 
 ## For developers
 
-Build against your game install (the folder with `MelonLoader/`):
+Build against the folder that holds `MelonLoader/` (with its generated `Il2CppAssemblies/`) and `Mods/`: the game folder for a plain MelonLoader install, or the mod manager profile (for Gale, `~/.local/share/com.kesomannen.gale/pit-of-goblin/profiles/<profile>`):
 
 ```sh
-dotnet build POGFonts.csproj -c Release -p:GameDir="<game folder>"
+dotnet build POGFonts.csproj -c Release -p:GameDir="<that folder>"
 python build_pack.py packs/GoblinMenuCyrillic     # zip a font mod for Thunderstore
 ```
 
