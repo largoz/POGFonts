@@ -1,8 +1,8 @@
 {
   "name": "POG_Fonts",
-  "version_number": "1.1.0",
+  "version_number": "1.2.0",
   "website_url": "https://github.com/largoz/POGFonts",
-  "description": "Font manager. Font mods add letters the game's fonts lack (e.g. Cyrillic); pick one per game font, or Vanilla, so they never conflict. Settings in POG Config.",
+  "description": "Font manager: pick the font for each kind of text in the game (menu, in-game UI, signs, price tags...), from the game's own fonts or font mods. Settings in POG Config.",
   "dependencies": [
     "LavaGang-MelonLoader-0.7.2"
   ]

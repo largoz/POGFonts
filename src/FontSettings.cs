@@ -46,10 +46,14 @@ namespace POGMods.Fonts
             }
             entry.Description = $"Font for the game font \"{slot.Target}\". One of: {string.Join(", ", slot.OptionNames())}";
 
-            // POG Fonts 1.1.0 stored a font mod's bare name, which meant adding its letters.
-            if (!slot.Has(entry.Value) && slot.Has(AddPrefix + entry.Value))
+            // Earlier values that now mean the original: POG Fonts 1.1.0 stored a font mod's bare name
+            // (add its letters), 1.2.0 test builds "Add: <font mod>"; a font mod made for this game
+            // font is part of its original now, so "Replace: <it>" means the same.
+            string v = entry.Value ?? "";
+            bool addOn = slot.AddOns.Exists(c => v == c.Name || v == AddPrefix + c.Name || v == "Replace: " + c.Name);
+            if (!slot.Has(v) && addOn)
             {
-                entry.Value = AddPrefix + entry.Value;
+                entry.Value = FontSlot.Vanilla;
                 _category.SaveToFile(false);
             }
             else if (!slot.Has(entry.Value))

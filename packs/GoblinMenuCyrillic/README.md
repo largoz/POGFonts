@@ -20,7 +20,9 @@ Some letters came out better than others. If you know how to make any of them be
 
 ## Installation
 
-Needs [POG Fonts](https://thunderstore.io/c/pit-of-goblin/p/Largo/POG_Fonts/), the font manager; a mod manager installs it for you. Once installed, this font is used right away. To go back to the game's own look, pick **Vanilla** for the menu font in POG Config (MODS, then POG Fonts).
+Needs [POG Fonts](https://thunderstore.io/c/pit-of-goblin/p/Largo/POG_Fonts/), the font manager; a mod manager installs it for you. Once installed, the menu font gets these letters right away. To go back to the game's own look, disable this mod.
+
+The font can also be picked for other kinds of text in POG Fonts' settings, for example the in-game UI, which then shows Cyrillic in this style too.
 
 By hand: unpack the zip into the game folder (or your mod manager profile), so that `Mods/Largo-Goblin_Menu_Cyrillic/` with `pogfont.json` in it ends up inside `Mods`.
 

@@ -12,12 +12,13 @@ namespace POGMods.Fonts
     /// The TextMeshPro side. TextMeshPro draws a letter from the text's font asset if the asset has
     /// it, otherwise from the first asset in its fallback list that does. So:
     /// <list type="bullet">
-    /// <item>Add: the chosen font goes first in the fallback list; only letters the game font lacks change.</item>
-    /// <item>Replace: the game font's own letters are switched off and its fallback list starts with the
-    /// chosen font, then a fresh copy of the game font itself for letters the chosen one lacks. Every
-    /// text that uses the game font changes, with its materials (outline, shadow) kept, and texts
-    /// created later are covered too, since nothing on the texts themselves is touched.</item>
-    /// <item>Vanilla: the asset gets back exactly the letters and fallback list it had.</item>
+    /// <item>Original: the game font's own letters, then font mods made for it (first in the fallback
+    /// list), then the game's own fallbacks. With no such font mod this is exactly the game.</item>
+    /// <item>Another font chosen: the game font's own letters are switched off and its fallback list
+    /// starts with the chosen font's own letters (no fallbacks of its own), then a fresh copy of the
+    /// game font, then the font mods made for it: every letter the chosen font lacks stays as in the
+    /// original. Every text that uses the game font changes, materials (outline, shadow) kept, and
+    /// texts created later too, since nothing on the texts themselves is touched.</item>
     /// </list>
     /// </summary>
     internal sealed class FallbackPatcher
@@ -72,7 +73,7 @@ namespace POGMods.Fonts
             foreach (var n in byName.Keys) GameFontSeen?.Invoke(n);
 
             bool pending = false, changed = false;
-            var checks = new List<(FontSlot slot, FontOption option, TMP_FontAsset target)>();
+            var checks = new List<(FontSlot slot, FontOption option, TMP_FontAsset target, TMP_FontAsset chosen, List<TMP_FontAsset> addOns)>();
             foreach (var slot in slots)
             {
                 var option = slot.Find(selected(slot)) ?? FontOption.VanillaOption;
@@ -82,27 +83,34 @@ namespace POGMods.Fonts
                     continue;
                 }
 
-                var head = new List<TMP_FontAsset>();
-                bool replace = false;
-                if (option.Kind == OptionKind.Add)
+                // The original: the game font's own letters, then letters from font mods made for it.
+                var addOns = new List<TMP_FontAsset>();
+                foreach (var c in slot.AddOns)
                 {
-                    var a = AssetFor(option.Choice, target);
-                    if (a != null) head.Add(a);
+                    var a = AssetFor(c, target);
+                    if (a != null) addOns.Add(a);
                 }
-                else if (option.Kind == OptionKind.Replace)
+
+                var head = new List<TMP_FontAsset>(addOns);
+                bool replace = false;
+                TMP_FontAsset chosen = null;
+                if (option.Kind == OptionKind.Replace)
                 {
-                    TMP_FontAsset r = null;
-                    if (option.Choice != null) r = AssetFor(option.Choice, target);
-                    else if (!byName.TryGetValue(option.GameFont, out r))
+                    if (option.Choice != null) chosen = AssetFor(option.Choice, target);
+                    else if (byName.TryGetValue(option.GameFont, out var game)) chosen = OwnLettersOf(game, target);
+                    else
                     {
-                        pending = true; // that game font loads later; stay vanilla until it does
+                        pending = true; // that game font loads later; stay as the original until it does
                         WarnMissing(slot, option.GameFont);
                     }
-                    if (r != null)
+                    if (chosen != null)
                     {
-                        head.Add(r);
+                        // The chosen font's own letters first; every letter it lacks as in the original.
+                        head.Clear();
+                        head.Add(chosen);
                         var original = OriginalCopy(target);
                         if (original != null) head.Add(original);
+                        head.AddRange(addOns);
                         replace = true;
                     }
                 }
@@ -113,16 +121,18 @@ namespace POGMods.Fonts
                 if (lettersChanged || listChanged)
                 {
                     changed = true;
-                    string what = head.Count == 0 ? "vanilla" : replace ? $"replaced by {option.Name.Substring(9)}" : $"adds {option.Choice.Name}";
+                    string what = replace ? $"drawn in {option.Name.Substring(9)}"
+                                : addOns.Count > 0 ? $"original, with letters from {string.Join(", ", slot.AddOns.Select(c => c.Name))}"
+                                : "original";
                     _pendingLog[target.name] = ($"{target.name}: {what}", Time.unscaledTime);
-                    checks.Add((slot, head.Count == 0 ? FontOption.VanillaOption : option, target));
+                    checks.Add((slot, replace ? option : FontOption.VanillaOption, target, chosen, addOns));
                 }
             }
 
             if (changed)
             {
                 ForgetRememberedLetters(loaded);
-                foreach (var (slot, option, target) in checks) SelfCheck(slot, option, target);
+                foreach (var (slot, option, target, chosen, addOns) in checks) SelfCheck(slot, option, target, chosen, addOns);
                 RefreshTexts();
             }
             return pending;
@@ -224,6 +234,57 @@ namespace POGMods.Fonts
         }
 
         /// <summary>
+        /// Another game font's own letters, without its fallback list: chosen for this text, it must
+        /// draw only what it has, and leave every other letter to this text's original (otherwise
+        /// Lacquer, say, would bring Roboto's Cyrillic along). Built from its font file at this text's
+        /// sampling settings, or, for a fixed-atlas font with no file, as a clone with no fallbacks.
+        /// </summary>
+        private TMP_FontAsset OwnLettersOf(TMP_FontAsset game, TMP_FontAsset target)
+        {
+            string key = "game:" + game.name + "|" + target.name;
+            if (_assets.TryGetValue(key, out var cached) && cached != null) return cached;
+
+            TMP_FontAsset copy = null;
+            string what;
+            var source = game.sourceFontFile;
+            try
+            {
+                if (source != null)
+                {
+                    copy = TMP_FontAsset.CreateFontAsset(source, Mathf.RoundToInt(target.faceInfo.pointSize), target.atlasPadding,
+                        target.atlasRenderMode, target.atlasWidth, target.atlasHeight, AtlasPopulationMode.Dynamic, true);
+                    what = "from its font file";
+                }
+                else
+                {
+                    // A fixed atlas never adds glyphs, so sharing its atlas texture is safe.
+                    copy = UnityEngine.Object.Instantiate(game);
+                    copy.fallbackFontAssetTable = new Il2CppSystem.Collections.Generic.List<TMP_FontAsset>();
+                    // If that game font is itself switched to another font here, its letters are off;
+                    // the clone gets them back from what was saved.
+                    if (_states.TryGetValue(game.name, out var st) && st.Instance == game.Pointer && st.OwnCharacters != null)
+                    {
+                        var chars = copy.characterTable;
+                        chars.Clear();
+                        foreach (var c in st.OwnCharacters) chars.Add(c);
+                    }
+                    copy.ReadFontAssetDefinition();
+                    what = "as a clone of its fixed atlas";
+                }
+            }
+            catch (Exception ex)
+            {
+                _log.Warning($"{game.name}: could not copy its letters for {target.name} ({ex.Message})");
+                return null;
+            }
+            if (copy == null) return null;
+            Keep(copy, GameFonts.Display(game.name) + " for " + GameFonts.Display(target.name) + OwnSuffix);
+            MelonDebug.Msg($"[POG Fonts] {game.name}: letters copied for {target.name} {what}");
+            _assets[key] = copy;
+            return copy;
+        }
+
+        /// <summary>
         /// A fresh copy of the game font built from its own font file, used after a replacement font
         /// for letters that one lacks. Null for an asset with no font file (a fixed atlas).
         /// </summary>
@@ -244,15 +305,6 @@ namespace POGMods.Fonts
             if (copy != null) Keep(copy, GameFonts.Display(target.name) + " original" + OwnSuffix);
             _originalCopies[target.name] = copy;
             return copy;
-        }
-
-        /// <summary>True if <paramref name="asset"/> is a font this patcher built for <paramref name="target"/>.</summary>
-        private bool IsMadeFor(TMP_Asset asset, TMP_FontAsset target)
-        {
-            string suffix = "|" + target.name;
-            foreach (var kv in _assets)
-                if (kv.Key.EndsWith(suffix) && kv.Value != null && kv.Value == asset) return true;
-            return false;
         }
 
         private static void Keep(TMP_FontAsset asset, string name)
@@ -303,46 +355,39 @@ namespace POGMods.Fonts
         }
 
         /// <summary>
-        /// Logs where sample letters now come from, so a bug report shows the wiring: for Add from the
-        /// added font, for Replace from anything but the game font itself, for Vanilla Latin from the
-        /// game font and nothing from this mod.
+        /// Logs where sample letters now come from, so a bug report shows the wiring. Original: Latin
+        /// from the game font, a font mod's own sample letters from that font mod. Another font chosen:
+        /// Latin from the chosen font, and a font mod's sample letters (the ones the chosen font may
+        /// lack) from the chosen font, the original or the font mod, never from somewhere else.
         /// </summary>
-        private void SelfCheck(FontSlot slot, FontOption option, TMP_FontAsset target)
+        private void SelfCheck(FontSlot slot, FontOption option, TMP_FontAsset target, TMP_FontAsset chosen, List<TMP_FontAsset> addOns)
         {
-            string sample = option.Kind == OptionKind.Add ? option.Choice.Sample
-                          : option.Kind == OptionKind.Replace ? ReplaceSample
-                          : ReplaceSample + (slot.Options.Where(o => o.Kind == OptionKind.Add).Select(o => o.Choice.Sample).FirstOrDefault(x => !string.IsNullOrEmpty(x)) ?? "");
-            if (string.IsNullOrEmpty(sample)) return;
             _originalCopies.TryGetValue(target.name, out var original);
-
+            string addOnSample = string.Concat(slot.AddOns.Select(c => c.Sample ?? ""));
             var bad = new StringBuilder();
-            string from0 = null;
-            foreach (char c in sample)
+            void Check(string letters, Func<TMP_Asset, bool> ok)
             {
-                bool alt;
-                var ch = TMP_FontAssetUtilities.GetCharacterFromFontAsset(c, target, true, FontStyles.Normal, FontWeight.Regular, out alt);
-                var from = ch?.textAsset;
-                string fromName = from != null ? from.name : "none";
-                from0 ??= fromName;
-                // Vanilla can still draw a letter through another game font that is itself replaced
-                // (Passero falls back to Roboto; Roboto may be set to Goblin Menu). What must be gone
-                // are the fonts this setting put on this game font.
-                bool ours = from != null && from != original && IsMadeFor(from, target);
-                bool ok = option.Kind switch
+                foreach (char c in letters)
                 {
-                    OptionKind.Add => from != null && from.name == option.Choice.Name + OwnSuffix,
-                    OptionKind.Replace => from != null && from != target && from != original,
-                    _ => char.IsAscii(c) ? from == target : !ours,
-                };
-                if (!ok) bad.Append(c).Append('→').Append(fromName).Append(' ');
+                    bool alt;
+                    var from = TMP_FontAssetUtilities.GetCharacterFromFontAsset(c, target, true, FontStyles.Normal, FontWeight.Regular, out alt)?.textAsset;
+                    if (!ok(from)) bad.Append(c).Append('→').Append(from != null ? from.name : "none").Append(' ');
+                }
+            }
+            bool IsAddOn(TMP_Asset a) => a != null && addOns.Any(x => x == a);
+
+            if (option.Kind == OptionKind.Replace)
+            {
+                Check(ReplaceSample, a => a != null && a == chosen);
+                Check(addOnSample, a => a != null && (a == chosen || a == original || IsAddOn(a)));
+            }
+            else
+            {
+                Check(ReplaceSample, a => a != null && a == target);
+                Check(addOnSample, IsAddOn);
             }
             if (bad.Length == 0)
-                MelonDebug.Msg("[POG Fonts] " + option.Kind switch
-                {
-                    OptionKind.Add => $"{target.name}: check OK, {sample} from {option.Choice.Name}",
-                    OptionKind.Replace => $"{target.name}: check OK, {sample} no longer from the game font (e.g. from {from0})",
-                    _ => $"{target.name}: check OK, vanilla",
-                });
+                MelonDebug.Msg($"[POG Fonts] {target.name}: check OK ({option.Name})");
             else
                 _log.Warning($"{target.name}: check failed for {option.Name}: {bad.ToString().Trim()}");
         }

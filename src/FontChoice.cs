@@ -13,14 +13,17 @@ namespace POGMods.Fonts
         public string Sample;    // its own letters, checked after wiring; null to skip the check
     }
 
-    internal enum OptionKind { Vanilla, Add, Replace }
+    internal enum OptionKind { Vanilla, Replace }
 
-    /// <summary>One entry in a game font's list: leave it, add letters to it, or replace it.</summary>
+    /// <summary>
+    /// One entry in a game font's list: the original, or another font drawing this text. A chosen
+    /// font draws only the letters it has; every other letter stays as in the original.
+    /// </summary>
     internal sealed class FontOption
     {
         public OptionKind Kind;
         public string Name;          // shown in the settings and stored in the preferences
-        public FontChoice Choice;    // the font file, for Add and for Replace with a font mod
+        public FontChoice Choice;    // the font file, for a font mod
         public string GameFont;      // the game font's asset name, for Replace with another game font
 
         public static readonly FontOption VanillaOption = new FontOption { Kind = OptionKind.Vanilla, Name = FontSlot.Vanilla };
@@ -32,6 +35,9 @@ namespace POGMods.Fonts
         public const string Vanilla = "Vanilla";
 
         public string Target;      // the game's TMP_FontAsset name, e.g. "PasseroOne-Regular SDF"
+        // Font mods made for this game font. They are part of its original: they fill in the
+        // letters it lacks whichever option is chosen, and are not offered as options here.
+        public readonly List<FontChoice> AddOns = new List<FontChoice>();
         public string Label;       // row label in the settings
         public string DefaultName; // the option used until the player picks another
         public readonly List<FontOption> Options = new List<FontOption>();

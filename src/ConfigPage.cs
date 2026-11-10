@@ -30,7 +30,7 @@ namespace POGMods.Fonts
         }
 
         private static ModInfo Info() => new ModInfo(FontsMod.VERSION,
-            "Font manager: for each game font, keep it, add a font mod's letters, or draw it in another font. " +
+            "Font manager: pick the font for each kind of text in the game. A chosen font draws the letters it has; the rest stay as in the original. " +
             "A font file put into UserData/POGFonts/<game font name>/ shows up here after a restart.", "largo");
 
         [MethodImpl(MethodImplOptions.NoInlining)]
@@ -53,21 +53,14 @@ namespace POGMods.Fonts
         private static Option ToOption(FontSlot slot, FontOption o)
         {
             string game = GameFonts.Display(slot.Target);
-            switch (o.Kind)
-            {
-                case OptionKind.Add:
-                    return new Option(o.Name, $"{o.Choice.Name}: add letters",
-                        $"Keeps {game} and adds only the letters it lacks", TagMods);
-                case OptionKind.Replace when o.Choice != null:
-                    return new Option(o.Name, o.Choice.Name,
-                        $"Draws all of {game}'s text in this font", TagMods);
-                case OptionKind.Replace:
-                    return new Option(o.Name, $"{GameFonts.Display(o.GameFont)} (game font)",
-                        $"Draws all of {game}'s text in the game's {GameFonts.Display(o.GameFont)}", TagGame);
-                default:
-                    return new Option(o.Name, $"{game} (original)",
-                        "The game's own font for this text, unchanged", TagOriginal);
-            }
+            const string rest = "letters it lacks stay as in the original";
+            if (o.Kind == OptionKind.Replace && o.Choice != null)
+                return new Option(o.Name, o.Choice.Name, $"Draws this text; {rest}", TagMods);
+            if (o.Kind == OptionKind.Replace)
+                return new Option(o.Name, $"{GameFonts.Display(o.GameFont)} (game font)",
+                    $"The game's {GameFonts.Display(o.GameFont)}; {rest}", TagGame);
+            string with = slot.AddOns.Count > 0 ? ", with letters from " + string.Join(", ", slot.AddOns.Select(c => c.Name)) : ", unchanged";
+            return new Option(o.Name, $"{game} (original)", "The game's own font for this text" + with, TagOriginal);
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]

@@ -12,8 +12,10 @@ using UnityEngine;
 namespace POGMods.Fonts
 {
     /// <summary>
-    /// Font manager. For every font the game uses, the player picks: Vanilla, add a font mod's
-    /// letters to it, or replace it with any installed font or another of the game's fonts.
+    /// Font manager. For every font the game uses, the player picks the font that draws its text:
+    /// the original, a font mod, or another of the game's fonts. A chosen font draws only the letters
+    /// it has; every other letter stays as in the original. Font mods made for a game font (like
+    /// Goblin Menu Cyrillic for the menu font) are part of that font's original.
     /// </summary>
     public class FontsMod : MelonMod
     {
@@ -21,7 +23,6 @@ namespace POGMods.Fonts
 
         private const string UserFolderName = "POGFonts";
         private const string GameFontsFile = "game_fonts.txt";
-        private const string AddPrefix = "Add: ";
         private const string ReplacePrefix = "Replace: ";
         private const string GameSuffix = " (game)";
 
@@ -83,16 +84,13 @@ namespace POGMods.Fonts
             var slots = new List<FontSlot>();
             foreach (var target in targets)
             {
-                var slot = new FontSlot { Target = target, Label = GameFonts.Label(target) };
+                var slot = new FontSlot { Target = target, Label = GameFonts.Label(target), DefaultName = FontSlot.Vanilla };
+                slot.AddOns.AddRange(choices.Where(c => c.Target == target));
                 slot.Options.Add(FontOption.VanillaOption);
-                foreach (var c in choices.Where(c => c.Target == target))
-                    slot.Options.Add(new FontOption { Kind = OptionKind.Add, Name = AddPrefix + c.Name, Choice = c });
-                foreach (var c in choices)
+                foreach (var c in choices.Where(c => c.Target != target))
                     slot.Options.Add(new FontOption { Kind = OptionKind.Replace, Name = ReplacePrefix + c.Name, Choice = c });
                 foreach (var g in gameFonts.Where(g => g != target))
                     slot.Options.Add(new FontOption { Kind = OptionKind.Replace, Name = ReplacePrefix + GameFonts.Display(g) + GameSuffix, GameFont = g });
-                // A font mod made for this game font is installed to be used: it is the default.
-                slot.DefaultName = slot.Options.FirstOrDefault(o => o.Kind == OptionKind.Add)?.Name ?? FontSlot.Vanilla;
                 slots.Add(slot);
             }
             return slots.OrderBy(s => GameFonts.Order(s.Target)).ThenBy(s => s.Label, StringComparer.OrdinalIgnoreCase).ToList();

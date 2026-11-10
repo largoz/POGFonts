@@ -1,3 +1,12 @@
+## 1.2.0
+
+- Pick the font for each kind of text in the game: the main menu, the in-game UI, lift displays, painted signs, price tags and the rest. Choose one of the game's own fonts or a font mod. Changes show at once.
+- A chosen font draws only the letters it has. Every other letter stays as in the original, so a font without Cyrillic leaves Cyrillic text as it was.
+- Font mods made for a game font (Goblin Menu Cyrillic for the menu font) are part of that font's original and fill in its missing letters. Your 1.1.0 choice carries over.
+- With POG Config 1.1.0 or newer each row opens a list with search and filters, and says where the font is seen in the game. Older POG Config shows sliders.
+- Switching back no longer leaves letters in the old font.
+- Quieter log: one line per change.
+
 ## 1.1.0
 
 - POG Fonts is now a font manager only. Fonts are separate mods: a folder with a `pogfont.json` and a font file anywhere under `Mods`, which is how mod managers install a font package. See "Making a font mod" in the README.
