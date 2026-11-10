@@ -95,8 +95,7 @@ namespace POGMods.Fonts
                 slot.DefaultName = slot.Options.FirstOrDefault(o => o.Kind == OptionKind.Add)?.Name ?? FontSlot.Vanilla;
                 slots.Add(slot);
             }
-            // Rows with a named use first (the menu font), then the rest by name.
-            return slots.OrderBy(s => s.Label == GameFonts.Display(s.Target) ? 1 : 0).ThenBy(s => s.Label, StringComparer.OrdinalIgnoreCase).ToList();
+            return slots.OrderBy(s => GameFonts.Order(s.Target)).ThenBy(s => s.Label, StringComparer.OrdinalIgnoreCase).ToList();
         }
 
         public override void OnSceneWasLoaded(int buildIndex, string sceneName) => _applyRequested = true;

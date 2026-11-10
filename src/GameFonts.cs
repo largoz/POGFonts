@@ -20,11 +20,44 @@ namespace POGMods.Fonts
             "PasseroOne-Regular SDF", "Roboto-Medium SDF", "RulerGold SDF", "ZCOOLKuaiLe-Regular SDF",
         };
 
-        // Friendlier names for the settings. Where a font is used was seen in game; see the README.
+        // Friendlier names for the settings, and where each font shows up. Seen in game on
+        // 2026-11-10 with a probe that logged every text and its font (menu, settings, lobby,
+        // tavern, shops, HUD, inventory); dungeon floors not covered yet.
         private static readonly Dictionary<string, string> Labels = new Dictionary<string, string>
         {
             ["PasseroOne-Regular SDF"] = "Menu font (Passero One)",
+            ["ZCOOLKuaiLe-Regular SDF"] = "In-game UI (ZCOOL KuaiLe)",
+            ["RulerGold SDF"] = "Lift displays (Ruler Gold)",
+            ["Lacquer-Regular SDF"] = "Painted signs (Lacquer)",
+            ["Nope 8p SDF"] = "Price tags (Nope 8p)",
+            ["Roboto-Medium SDF"] = "Small labels (Roboto)",
+            ["LiberationSans SDF"] = "Mod settings panel (Liberation Sans)",
         };
+        private static readonly Dictionary<string, string> Uses = new Dictionary<string, string>
+        {
+            ["PasseroOne-Regular SDF"] = "Main menu, game settings, intro, news",
+            ["ZCOOLKuaiLe-Regular SDF"] = "HUD, item names and descriptions, prompts, chat, loading screen",
+            ["RulerGold SDF"] = "Bucket lift floor and time displays, lobby loading text",
+            ["Lacquer-Regular SDF"] = "Painted tutorial signs in the tavern",
+            ["Nope 8p SDF"] = "Shop price tags, gambling stones",
+            ["Roboto-Medium SDF"] = "Version label, a few input fields",
+            ["LiberationSans SDF"] = "POG Config's MOD SETTINGS panel",
+            ["LiberationSans SDF - Fallback"] = "Backup letters for other fonts",
+            ["NotoSansJP-SemiBold SDF"] = "Japanese letters",
+            ["NotoSansSC-SemiBold SDF"] = "Simplified Chinese letters",
+            ["NotoSansTC-SemiBold SDF"] = "Traditional Chinese letters",
+        };
+
+        /// <summary>Settings order: the fonts players notice most first, then the rest by name.</summary>
+        public static int Order(string target)
+        {
+            int i = 0;
+            foreach (var k in Labels.Keys) { if (k == target) return i; i++; }
+            return 1000;
+        }
+
+        /// <summary>Where the font is seen in game, or null if not known.</summary>
+        public static string Use(string target) => Uses.TryGetValue(target, out var u) ? u : null;
 
         private readonly string _file;
         private readonly SortedSet<string> _names = new SortedSet<string>(StringComparer.Ordinal);
