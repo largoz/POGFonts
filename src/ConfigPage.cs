@@ -30,7 +30,7 @@ namespace POGMods.Fonts
                     options));
             }
             POGConfig.Register("POG Fonts", entries, new ModInfo(FontsMod.VERSION,
-                "Font manager: for each game font, pick Vanilla or one of the installed font mods. " +
+                "Font manager: for each game font, pick Vanilla, add a font mod's letters, or replace it with any installed font or another game font. " +
                 "A font file put into UserData/POGFonts/<game font name>/ shows up here after a restart.", "largo"));
         }
     }

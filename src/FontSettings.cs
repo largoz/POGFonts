@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using MelonLoader;
 
@@ -6,57 +7,69 @@ namespace POGMods.Fonts
 {
     /// <summary>
     /// The player's choice per game font, kept in <c>UserData/MelonPreferences.cfg</c> under
-    /// [POG_Fonts]. The stored value is a font name, not a list position, so adding or removing
-    /// a font file never shifts another choice. This entry is the only record of the choice: the
-    /// POG Config page, the cfg file and any other mod all go through it, and every change to it
-    /// is applied in game.
+    /// [POG_Fonts]. The stored value is the option's name ("Vanilla", "Add: …", "Replace: …"), not a
+    /// list position, so adding or removing a font never shifts another choice. This entry is the
+    /// only record of the choice: the POG Config page, the cfg file and any other mod all go through
+    /// it, and every change to it is applied in game.
     /// </summary>
     internal sealed class FontSettings
     {
         public const string Category = "POG_Fonts";
+        private const string AddPrefix = "Add: ";
 
         private readonly MelonPreferences_Category _category;
-        private readonly System.Collections.Generic.Dictionary<FontSlot, MelonPreferences_Entry<string>> _entries =
-            new System.Collections.Generic.Dictionary<FontSlot, MelonPreferences_Entry<string>>();
+        private readonly Dictionary<string, MelonPreferences_Entry<string>> _entries = new Dictionary<string, MelonPreferences_Entry<string>>();
 
         public event Action Changed;
+
+        /// <summary>
+        /// While true every slot reports its default: POG Config records the value a row has when it
+        /// is registered as the one RESTORE DEFAULTS goes back to.
+        /// </summary>
+        public bool CapturingDefaults;
 
         public FontSettings()
         {
             _category = MelonPreferences.CreateCategory(Category, "POG Fonts");
         }
 
-        public void Bind(FontSlot slot)
+        private static string Key(FontSlot slot) => Regex.Replace(slot.Target, "[^A-Za-z0-9_]", "_");
+
+        public void Bind(FontSlot slot, Action<string> warn)
         {
-            string key = Regex.Replace(slot.Target, "[^A-Za-z0-9_]", "_");
-            var entry = _category.GetEntry<string>(key)
-                        ?? _category.CreateEntry(key, slot.DefaultName, slot.Label,
-                               $"Font that adds letters to the game font \"{slot.Target}\": " +
-                               $"{string.Join(", ", slot.OptionNames())}");
-            entry.OnEntryValueChanged.Subscribe((_, _) => Changed?.Invoke());
-            _entries[slot] = entry;
+            string key = Key(slot);
+            if (!_entries.TryGetValue(key, out var entry))
+            {
+                entry = _category.GetEntry<string>(key) ?? _category.CreateEntry(key, slot.DefaultName, slot.Label);
+                entry.OnEntryValueChanged.Subscribe((_, _) => Changed?.Invoke());
+                _entries[key] = entry;
+            }
+            entry.Description = $"Font for the game font \"{slot.Target}\". One of: {string.Join(", ", slot.OptionNames())}";
+
+            // POG Fonts 1.1.0 stored a font mod's bare name, which meant adding its letters.
+            if (!slot.Has(entry.Value) && slot.Has(AddPrefix + entry.Value))
+            {
+                entry.Value = AddPrefix + entry.Value;
+                _category.SaveToFile(false);
+            }
+            else if (!slot.Has(entry.Value))
+                warn($"{slot.Label}: saved choice \"{entry.Value}\" is not installed, using {slot.DefaultName}");
         }
 
         /// <summary>
-        /// The selected font for <paramref name="slot"/>. A stored name that no longer exists
-        /// (its file was removed) falls back to the default for this session but stays stored,
-        /// so putting the file back restores the choice.
+        /// The selected option for <paramref name="slot"/>. A stored name that no longer exists (its
+        /// font was removed) falls back to the default for this session but stays stored, so putting
+        /// the font back restores the choice.
         /// </summary>
         public string Selected(FontSlot slot)
         {
-            if (!_entries.TryGetValue(slot, out var entry)) return slot.DefaultName;
+            if (CapturingDefaults || !_entries.TryGetValue(Key(slot), out var entry)) return slot.DefaultName;
             return slot.Has(entry.Value) ? entry.Value : slot.DefaultName;
-        }
-
-        public bool StoredIsUnknown(FontSlot slot, out string stored)
-        {
-            stored = _entries.TryGetValue(slot, out var e) ? e.Value : null;
-            return stored != null && !slot.Has(stored);
         }
 
         public void Select(FontSlot slot, string name)
         {
-            if (!slot.Has(name) || !_entries.TryGetValue(slot, out var entry) || entry.Value == name) return;
+            if (!slot.Has(name) || !_entries.TryGetValue(Key(slot), out var entry) || entry.Value == name) return;
             entry.Value = name;
             _category.SaveToFile(false);
         }

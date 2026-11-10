@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using MelonLoader;
 using MelonLoader.Utils;
 using UnityEngine;
@@ -11,22 +12,29 @@ using UnityEngine;
 namespace POGMods.Fonts
 {
     /// <summary>
-    /// Font manager. Font mods add letters to the game's fonts; for each game font this picks
-    /// one of them, or none (Vanilla), so installed fonts never fight over the same letters.
+    /// Font manager. For every font the game uses, the player picks: Vanilla, add a font mod's
+    /// letters to it, or replace it with any installed font or another of the game's fonts.
     /// </summary>
     public class FontsMod : MelonMod
     {
-        public const string VERSION = "1.1.0";
+        public const string VERSION = "1.2.0";
 
         private const string UserFolderName = "POGFonts";
+        private const string GameFontsFile = "game_fonts.txt";
+        private const string AddPrefix = "Add: ";
+        private const string ReplacePrefix = "Replace: ";
+        private const string GameSuffix = " (game)";
 
-        // While a selected font's game font has not been loaded yet, look again this often (seconds).
+        // While a selected font waits for a game font that has not been loaded yet, look again this often (seconds).
         private const float RetryInterval = 2f;
 
+        private List<FontChoice> _choices = new List<FontChoice>();
+        private GameFonts _gameFonts;
         private List<FontSlot> _slots = new List<FontSlot>();
         private FontSettings _settings;
         private FallbackPatcher _patcher;
-        private bool _applyRequested, _pending;
+        private bool _configAvailable = true;
+        private bool _applyRequested, _rebuildRequested, _pending;
         private float _nextTry;
 
         public override void OnInitializeMelon()
@@ -35,45 +43,79 @@ namespace POGMods.Fonts
             string userFolder = Path.Combine(MelonEnvironment.UserDataDirectory, UserFolderName);
             try { Directory.CreateDirectory(userFolder); } catch { }
 
-            _slots = FontCatalog.Build(MelonEnvironment.ModsDirectory, userFolder,
+            _choices = FontCatalog.Build(MelonEnvironment.ModsDirectory, userFolder,
                 msg => LoggerInstance.Msg(msg), msg => LoggerInstance.Warning(msg));
-            if (_slots.Count == 0)
-            {
-                LoggerInstance.Msg($"no fonts installed. Install a font mod, or put a font into {userFolder}{Path.DirectorySeparatorChar}<game font name>{Path.DirectorySeparatorChar}");
-                return;
-            }
-            foreach (var slot in _slots)
-                LoggerInstance.Msg($"{slot.Label} ({slot.Target}): {string.Join(", ", slot.OptionNames())}; default {slot.DefaultName}");
-
+            _gameFonts = new GameFonts(Path.Combine(userFolder, GameFontsFile), msg => LoggerInstance.Warning(msg));
             _settings = new FontSettings();
-            // POG Config records each row's current value as its default, so register before the
-            // saved choices are bound: until then every slot reports its default.
-            try { ConfigPage.Register(_slots, s => _settings.Selected(s), (s, name) => _settings.Select(s, name)); }
-            catch (Exception ex) when (ex is FileNotFoundException || ex is TypeLoadException || ex is MissingMethodException)
-            { LoggerInstance.Msg("POG Config not installed: choose fonts in UserData/MelonPreferences.cfg [POG_Fonts]"); }
-
-            foreach (var slot in _slots)
-            {
-                _settings.Bind(slot);
-                if (_settings.StoredIsUnknown(slot, out var stored))
-                    LoggerInstance.Warning($"{slot.Label}: saved font \"{stored}\" is not installed, using {slot.DefaultName}");
-            }
             _settings.Changed += () => _applyRequested = true;
+            _patcher.GameFontSeen = name => { if (_gameFonts.Add(name)) _rebuildRequested = true; };
+
+            Rebuild();
+            LoggerInstance.Msg($"{_choices.Count} fonts installed, {_slots.Count} game fonts");
+        }
+
+        /// <summary>(Re)creates one settings row per game font, with every option it has now.</summary>
+        private void Rebuild()
+        {
+            _slots = BuildSlots(_choices, _gameFonts.Names);
+            // POG Config records each row's value at registration as its default.
+            _settings.CapturingDefaults = true;
+            try
+            {
+                if (_configAvailable) ConfigPage.Register(_slots, s => _settings.Selected(s), (s, name) => _settings.Select(s, name));
+            }
+            catch (Exception ex) when (ex is FileNotFoundException || ex is TypeLoadException || ex is MissingMethodException)
+            {
+                _configAvailable = false;
+                LoggerInstance.Msg("POG Config not installed: choose fonts in UserData/MelonPreferences.cfg [POG_Fonts]");
+            }
+            finally { _settings.CapturingDefaults = false; }
+
+            foreach (var slot in _slots) _settings.Bind(slot, msg => LoggerInstance.Warning(msg));
             _applyRequested = true;
         }
 
-        public override void OnSceneWasLoaded(int buildIndex, string sceneName) => Apply();
+        private static List<FontSlot> BuildSlots(List<FontChoice> choices, IReadOnlyCollection<string> gameFonts)
+        {
+            var targets = new SortedSet<string>(gameFonts, StringComparer.Ordinal);
+            foreach (var c in choices) if (!string.IsNullOrEmpty(c.Target)) targets.Add(c.Target);
+
+            var slots = new List<FontSlot>();
+            foreach (var target in targets)
+            {
+                var slot = new FontSlot { Target = target, Label = GameFonts.Label(target) };
+                slot.Options.Add(FontOption.VanillaOption);
+                foreach (var c in choices.Where(c => c.Target == target))
+                    slot.Options.Add(new FontOption { Kind = OptionKind.Add, Name = AddPrefix + c.Name, Choice = c });
+                foreach (var c in choices)
+                    slot.Options.Add(new FontOption { Kind = OptionKind.Replace, Name = ReplacePrefix + c.Name, Choice = c });
+                foreach (var g in gameFonts.Where(g => g != target))
+                    slot.Options.Add(new FontOption { Kind = OptionKind.Replace, Name = ReplacePrefix + GameFonts.Display(g) + GameSuffix, GameFont = g });
+                // A font mod made for this game font is installed to be used: it is the default.
+                slot.DefaultName = slot.Options.FirstOrDefault(o => o.Kind == OptionKind.Add)?.Name ?? FontSlot.Vanilla;
+                slots.Add(slot);
+            }
+            // Rows with a named use first (the menu font), then the rest by name.
+            return slots.OrderBy(s => s.Label == GameFonts.Display(s.Target) ? 1 : 0).ThenBy(s => s.Label, StringComparer.OrdinalIgnoreCase).ToList();
+        }
+
+        public override void OnSceneWasLoaded(int buildIndex, string sceneName) => _applyRequested = true;
 
         public override void OnUpdate()
         {
             if (_applyRequested || (_pending && Time.unscaledTime >= _nextTry)) Apply();
+            if (_rebuildRequested)
+            {
+                _rebuildRequested = false;
+                LoggerInstance.Msg("new game font seen; settings rows updated");
+                Rebuild();
+            }
         }
 
         private void Apply()
         {
             _applyRequested = false;
             _nextTry = Time.unscaledTime + RetryInterval;
-            if (_slots.Count == 0) { _pending = false; return; }
             _pending = _patcher.Apply(_slots, _settings.Selected);
         }
     }

@@ -22,45 +22,27 @@ namespace POGMods.Fonts
         public const int DescriptorFormat = 1;
         private static readonly string[] FontExtensions = { ".ttf", ".otf" };
 
-        // Friendlier row labels for game fonts players are likely to care about.
-        private static readonly Dictionary<string, string> Labels = new Dictionary<string, string>
+        /// <summary>Every installed font, font mods first, each name once.</summary>
+        public static List<FontChoice> Build(string modsFolder, string userFolder, Action<string> info, Action<string> warn)
         {
-            ["PasseroOne-Regular SDF"] = "Menu font",
-        };
-
-        public static List<FontSlot> Build(string modsFolder, string userFolder, Action<string> info, Action<string> warn)
-        {
-            var slots = new List<FontSlot>();
-            FontSlot SlotFor(string target)
+            var choices = new List<FontChoice>();
+            void Add(FontChoice choice, string source)
             {
-                var slot = slots.Find(s => s.Target == target);
-                if (slot == null)
+                if (choices.Exists(c => c.Name == choice.Name))
                 {
-                    slot = new FontSlot { Target = target, Label = Labels.TryGetValue(target, out var l) ? l : target };
-                    slots.Add(slot);
-                }
-                return slot;
-            }
-            void Add(string target, FontChoice choice, string source)
-            {
-                var slot = SlotFor(target);
-                if (slot.Has(choice.Name))
-                {
-                    warn($"skipped {source}: a font named \"{choice.Name}\" is already installed for {target}");
+                    warn($"skipped {source}: a font named \"{choice.Name}\" is already installed");
                     return;
                 }
-                slot.Choices.Add(choice);
-                // Installing a font is the request to use it: the first one found is the default.
-                slot.DefaultName ??= choice.Name;
-                info($"font \"{choice.Name}\" for {target} ({source})");
+                choices.Add(choice);
+                info($"font \"{choice.Name}\" (made for {choice.Target}) from {source}");
             }
 
             // Font mods first, then fonts added by hand; each group in a stable order.
             var descriptors = Find(modsFolder, DescriptorName, warn).Concat(Find(userFolder, DescriptorName, warn)).ToList();
             foreach (var path in descriptors)
             {
-                var pack = ReadDescriptor(path, warn);
-                if (pack.HasValue) Add(pack.Value.target, pack.Value.choice, path);
+                var choice = ReadDescriptor(path, warn);
+                if (choice != null) Add(choice, path);
             }
 
             if (Directory.Exists(userFolder))
@@ -73,11 +55,10 @@ namespace POGMods.Fonts
                         .Where(f => FontExtensions.Contains(Path.GetExtension(f).ToLowerInvariant()))
                         .OrderBy(f => f, StringComparer.OrdinalIgnoreCase);
                     foreach (var file in files)
-                        Add(Path.GetFileName(dir), new FontChoice { Name = Path.GetFileNameWithoutExtension(file), FontFile = file }, file);
+                        Add(new FontChoice { Name = Path.GetFileNameWithoutExtension(file), FontFile = file, Target = Path.GetFileName(dir) }, file);
                 }
             }
-
-            return slots.Where(s => s.Choices.Count > 0).ToList();
+            return choices;
         }
 
         private static IEnumerable<string> Find(string folder, string fileName, Action<string> warn)
@@ -106,7 +87,7 @@ namespace POGMods.Fonts
         /// <code>{ "format": 1, "name": "...", "font": "File.ttf", "target": "PasseroOne-Regular SDF", "sample": "..." }</code>
         /// <c>font</c> is relative to the json's folder; <c>format</c> and <c>sample</c> are optional.
         /// </summary>
-        private static (string target, FontChoice choice)? ReadDescriptor(string path, Action<string> warn)
+        private static FontChoice ReadDescriptor(string path, Action<string> warn)
         {
             try
             {
@@ -134,7 +115,7 @@ namespace POGMods.Fonts
                     warn($"skipped {path}: font file {file} not found");
                     return null;
                 }
-                return (target, new FontChoice { Name = name, FontFile = file, Sample = Str("sample") });
+                return new FontChoice { Name = name, FontFile = file, Target = target, Sample = Str("sample") };
             }
             catch (Exception ex)
             {
