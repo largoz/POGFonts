@@ -104,6 +104,7 @@ namespace POGMods.Fonts
         public override void OnUpdate()
         {
             if (_applyRequested || (_pending && Time.unscaledTime >= _nextTry)) Apply();
+            _patcher.FlushLog();
             if (_rebuildRequested)
             {
                 _rebuildRequested = false;

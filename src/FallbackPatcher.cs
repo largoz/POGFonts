@@ -34,6 +34,24 @@ namespace POGMods.Fonts
         /// <summary>Called with the name of every game font asset found loaded.</summary>
         public Action<string> GameFontSeen;
 
+        // A slider dragged across a dozen options would log a dozen changes: each game font's
+        // change is logged once, after it has stayed put for this long.
+        private const float LogSettleSeconds = 1f;
+        private readonly Dictionary<string, (string text, float at)> _pendingLog = new Dictionary<string, (string, float)>();
+
+        /// <summary>Writes the settled change lines; call every frame.</summary>
+        public void FlushLog()
+        {
+            if (_pendingLog.Count == 0) return;
+            foreach (var key in _pendingLog.Keys.ToList())
+            {
+                var (text, at) = _pendingLog[key];
+                if (Time.unscaledTime - at < LogSettleSeconds) continue;
+                _log.Msg(text);
+                _pendingLog.Remove(key);
+            }
+        }
+
         public FallbackPatcher(MelonLogger.Instance log) => _log = log;
 
         /// <summary>
@@ -96,7 +114,7 @@ namespace POGMods.Fonts
                 {
                     changed = true;
                     string what = head.Count == 0 ? "vanilla" : replace ? $"replaced by {option.Name.Substring(9)}" : $"adds {option.Choice.Name}";
-                    _log.Msg($"{target.name}: {what}");
+                    _pendingLog[target.name] = ($"{target.name}: {what}", Time.unscaledTime);
                     checks.Add((slot, head.Count == 0 ? FontOption.VanillaOption : option, target));
                 }
             }
@@ -199,7 +217,7 @@ namespace POGMods.Fonts
                 return null;
             }
             Keep(asset, choice.Name + OwnSuffix);
-            _log.Msg($"{choice.Name}: loaded for {target.name} (sampling {pointSize}, padding {target.atlasPadding}, " +
+            MelonDebug.Msg($"[POG Fonts] {choice.Name}: loaded for {target.name} (sampling {pointSize}, padding {target.atlasPadding}, " +
                      $"{target.atlasRenderMode}, atlas {target.atlasWidth}x{target.atlasHeight})");
             _assets[key] = asset;
             return asset;
@@ -226,6 +244,15 @@ namespace POGMods.Fonts
             if (copy != null) Keep(copy, GameFonts.Display(target.name) + " original" + OwnSuffix);
             _originalCopies[target.name] = copy;
             return copy;
+        }
+
+        /// <summary>True if <paramref name="asset"/> is a font this patcher built for <paramref name="target"/>.</summary>
+        private bool IsMadeFor(TMP_Asset asset, TMP_FontAsset target)
+        {
+            string suffix = "|" + target.name;
+            foreach (var kv in _assets)
+                if (kv.Key.EndsWith(suffix) && kv.Value != null && kv.Value == asset) return true;
+            return false;
         }
 
         private static void Keep(TMP_FontAsset asset, string name)
@@ -259,9 +286,10 @@ namespace POGMods.Fonts
                 letters += foreign;
                 left += CountRemembered(f);
             }
-            if (fonts > 0)
-                _log.Msg($"forgot {letters} letters remembered from fallbacks in {fonts} fonts" +
-                         (left > 0 ? $" ({left} still remembered)" : ""));
+            if (left > 0)
+                _log.Warning($"forgot {letters} letters remembered from fallbacks in {fonts} fonts, but {left} are still remembered");
+            else if (fonts > 0)
+                MelonDebug.Msg($"[POG Fonts] forgot {letters} letters remembered from fallbacks in {fonts} fonts");
         }
 
         private static int CountRemembered(TMP_FontAsset font)
@@ -296,7 +324,10 @@ namespace POGMods.Fonts
                 var from = ch?.textAsset;
                 string fromName = from != null ? from.name : "none";
                 from0 ??= fromName;
-                bool ours = from != null && from.name.EndsWith(OwnSuffix) && from != original;
+                // Vanilla can still draw a letter through another game font that is itself replaced
+                // (Passero falls back to Roboto; Roboto may be set to Goblin Menu). What must be gone
+                // are the fonts this setting put on this game font.
+                bool ours = from != null && from != original && IsMadeFor(from, target);
                 bool ok = option.Kind switch
                 {
                     OptionKind.Add => from != null && from.name == option.Choice.Name + OwnSuffix,
@@ -306,7 +337,7 @@ namespace POGMods.Fonts
                 if (!ok) bad.Append(c).Append('→').Append(fromName).Append(' ');
             }
             if (bad.Length == 0)
-                _log.Msg(option.Kind switch
+                MelonDebug.Msg("[POG Fonts] " + option.Kind switch
                 {
                     OptionKind.Add => $"{target.name}: check OK, {sample} from {option.Choice.Name}",
                     OptionKind.Replace => $"{target.name}: check OK, {sample} no longer from the game font (e.g. from {from0})",
@@ -325,7 +356,7 @@ namespace POGMods.Fonts
                 if (t == null || !t.isActiveAndEnabled) continue;
                 try { t.ForceMeshUpdate(false, true); n++; } catch { }
             }
-            if (n > 0) _log.Msg($"refreshed {n} text objects");
+            if (n > 0) MelonDebug.Msg($"[POG Fonts] refreshed {n} text objects");
         }
     }
 }
